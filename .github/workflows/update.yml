@@ -1,0 +1,38 @@
+name: Update WNP Data
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # Toutes les 6 heures
+  workflow_dispatch:        # Permet de lancer manuellement si besoin
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run update script
+        run: |
+          npm install
+          npm run update:wnp
+
+      - name: Commit updated data
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add data/wnp-catalog.json
+          git commit -m "Auto-update: WNP catalog" || echo "No changes"
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
