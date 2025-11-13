@@ -11,7 +11,8 @@
       <div class="coi-header-inner">
         <h1>Cycloneoi Hub – Pacifique Ouest</h1>
         <p class="subtitle">
-          Diagrams ECMWF · Strike probability &amp; Plumes · Mise à jour auto toutes les 6&nbsp;h
+          Diagrams ECMWF · Strike probability &amp; Plumes · Mise à jour auto
+          toutes les 6&nbsp;h
         </p>
       </div>
     </header>
@@ -60,24 +61,28 @@
               <h2 class="tc-name">${sys.name || sys.id}</h2>
               <p class="tc-meta">
                 ID&nbsp;: ${sys.id || "–"}
+                · Bassin&nbsp;: ${sys.basin || "WPAC"}
                 · Centre&nbsp;: ${sys.center || "ECMWF"}
-                ${sys.advisoryTime ? " · Run&nbsp;: " + sys.advisoryTime : ""}
-              </p>
-              <div class="tc-images">
+                ${sys.year ? " · " + sys.year : ""}
                 ${
-                  sys.strikePng
-                    ? `<figure>
-                         <img src="${sys.strikePng}" loading="lazy" alt="Strike probability ${sys.name || sys.id}">
-                         <figcaption>Strike probability</figcaption>
-                       </figure>`
+                  sys.advisoryTime
+                    ? "<br>Run&nbsp;: " + sys.advisoryTime
+                    : ""
+                }
+              </p>
+              <div class="tc-links">
+                ${
+                  sys.strikeUrl
+                    ? `<a class="tc-link" href="${sys.strikeUrl}" target="_blank" rel="noopener noreferrer">
+                         Strike probability (ECMWF)
+                       </a>`
                     : ""
                 }
                 ${
-                  sys.plumesPng
-                    ? `<figure>
-                         <img src="${sys.plumesPng}" loading="lazy" alt="Plumes ${sys.name || sys.id}">
-                         <figcaption>Plumes</figcaption>
-                       </figure>`
+                  sys.plumesUrl
+                    ? `<a class="tc-link" href="${sys.plumesUrl}" target="_blank" rel="noopener noreferrer">
+                         Plumes (ECMWF)
+                       </a>`
                     : ""
                 }
               </div>
