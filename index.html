@@ -6,9 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./style.css" />
   </head>
-
   <body>
-    <!-- ===== HEADER ===== -->
     <header class="coi-header">
       <div class="coi-header-inner">
         <h1>Cycloneoi Hub – Pacifique Ouest</h1>
@@ -19,145 +17,172 @@
       </div>
     </header>
 
-    <!-- ===== MAIN ===== -->
     <main class="coi-main">
       <section class="coi-panel">
         <div id="status" class="status">Chargement des données…</div>
-        <div id="systems" class="systems-grid"></div>
+
+        <!-- Onglets systèmes -->
+        <div id="tabs" class="systems-tabs"></div>
+
+        <!-- Vue système sélectionné -->
+        <div id="system-view" class="system-view"></div>
       </section>
     </main>
 
-    <!-- ===== FOOTER ===== -->
     <footer class="coi-footer">
       <p>
         Données de prévision : ECMWF · Intégration automatique par Cycloneoi.
       </p>
     </footer>
 
-    <!-- ===== SCRIPT PRINCIPAL ===== -->
     <script>
-      // Convertit une URL "produit" ECMWF (page HTML)
-      // en URL PNG via l'API opencharts
-      function toPngUrl(pageUrl) {
-        if (!pageUrl) return null;
-        try {
-          const u = new URL(pageUrl);
-
-          const base_time = u.searchParams.get("base_time");
-          const offset = u.searchParams.get("offset");
-          const product = u.searchParams.get("product");
-          const unique_id = u.searchParams.get("unique_id");
-
-          if (!base_time || !product) return null;
-
-          const api = new URL(
-            "https://charts.ecmwf.int/opencharts-api/v1/products/cyclone/"
-          );
-          api.searchParams.set("format", "png");
-          api.searchParams.set("base_time", base_time);
-          api.searchParams.set("product", product);
-          if (offset) api.searchParams.set("offset", offset);
-          if (unique_id) api.searchParams.set("unique_id", unique_id);
-
-          return api.toString();
-        } catch (e) {
-          console.error("toPngUrl error:", e);
-          return null;
-        }
-      }
-
-      async function loadCatalog() {
+      async function loadEcmwfWpac() {
         const statusEl = document.getElementById("status");
-        const systemsEl = document.getElementById("systems");
+        const tabsEl = document.getElementById("tabs");
+        const viewEl = document.getElementById("system-view");
 
         try {
-          // IMPORTANT : on lit maintenant ecmwf-wpac.json
           const res = await fetch("./data/ecmwf-wpac.json?c=" + Date.now());
           if (!res.ok) throw new Error("HTTP " + res.status);
-
-          const catalog = await res.json();
-          const systems = catalog.systems || [];
+          const data = await res.json();
 
           statusEl.textContent =
-            "Dernière mise à jour : " + (catalog.lastUpdate || "n/a");
+            "Dernière mise à jour : " + (data.lastUpdate || "n/a");
 
+          const systems = Array.isArray(data.systems) ? data.systems : [];
           if (!systems.length) {
-            systemsEl.innerHTML =
+            tabsEl.innerHTML = "";
+            viewEl.innerHTML =
               '<div class="empty">Aucune activité en cours dans le Pacifique Ouest.</div>';
             return;
           }
 
-          systemsEl.innerHTML = "";
+          let activeIndex = 0;
 
-          systems.forEach((sys) => {
-            const card = document.createElement("article");
-            card.className = "tc-card";
+          function renderTabs() {
+            tabsEl.innerHTML = systems
+              .map(
+                (sys, index) => `
+                  <button
+                    class="system-tab ${index === activeIndex ? "is-active" : ""}"
+                    data-index="${index}"
+                  >
+                    <span class="tab-id">${sys.id || "??"}</span>
+                    <span class="tab-name">${sys.name || ""}</span>
+                  </button>
+                `
+              )
+              .join("");
 
-            const strikePng = toPngUrl(sys.strikeUrl);
-            const plumesPng = toPngUrl(sys.plumesUrl);
-
-            card.innerHTML = `
-              <h2 class="tc-name">${sys.id} · ${sys.name}</h2>
-              <p class="tc-meta">
-                Bassin&nbsp;: ${sys.basin || "WPAC"}
-                · Centre&nbsp;: ${sys.center || "ECMWF"}
-                · Année&nbsp;: ${sys.year || "—"}
-                ${
-                  sys.advisoryTime
-                    ? " · Run&nbsp;: " + sys.advisoryTime
-                    : ""
+            tabsEl.querySelectorAll(".system-tab").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const idx = Number(btn.getAttribute("data-index"));
+                if (!Number.isNaN(idx) && idx !== activeIndex) {
+                  activeIndex = idx;
+                  renderTabs();
+                  renderSystem();
                 }
-              </p>
+              });
+            });
+          }
 
-              <div class="tc-links">
-                ${
-                  sys.strikeUrl
-                    ? `<a class="tc-link" href="${sys.strikeUrl}" target="_blank" rel="noopener noreferrer">
-                         Ouvrir la page Strike ECMWF
-                       </a>`
-                    : ""
-                }
-                ${
-                  sys.plumesUrl
-                    ? `<a class="tc-link" href="${sys.plumesUrl}" target="_blank" rel="noopener noreferrer">
-                         Ouvrir la page Plumes ECMWF
-                       </a>`
-                    : ""
-                }
-              </div>
+          function renderSystem() {
+            const sys = systems[activeIndex];
+            if (!sys) return;
 
-              <div class="tc-images">
-                ${
-                  strikePng
-                    ? `<div class="tc-image-block">
-                         <h3>Strike probability (ECMWF)</h3>
-                         <img src="${strikePng}" alt="Strike probability">
-                       </div>`
-                    : ""
-                }
+            const strikeImg = sys.strikeImage || null;
+            const plumesImg = sys.plumesImage || null;
 
-                ${
-                  plumesPng
-                    ? `<div class="tc-image-block">
-                         <h3>Plumes (ECMWF)</h3>
-                         <img src="${plumesPng}" alt="Plumes ECMWF">
-                       </div>`
-                    : ""
-                }
-              </div>
+            const runInfo =
+              sys.advisoryTime ||
+              sys.run ||
+              (sys.year ? String(sys.year) : "Prévision en cours");
+
+            viewEl.innerHTML = `
+              <article class="tc-card">
+                <header class="tc-card-header">
+                  <div class="tc-title">
+                    <span class="tc-id">${sys.id || ""}</span>
+                    <span class="tc-name">${sys.name || ""}</span>
+                  </div>
+                  <div class="tc-meta">
+                    Bassin&nbsp;: ${sys.basin || "WPAC"}
+                    · Centre&nbsp;: ${sys.center || "ECMWF"}
+                    ${sys.year ? " · Année&nbsp;: " + sys.year : ""}
+                    ${runInfo ? " · Run&nbsp;: " + runInfo : ""}
+                  </div>
+                </header>
+
+                <div class="tc-card-body">
+                  <div class="tc-column">
+                    <h2>Strike probability (ECMWF)</h2>
+                    ${
+                      strikeImg
+                        ? `
+                          <a href="${strikeImg}" target="_blank" rel="noopener noreferrer">
+                            <img
+                              src="${strikeImg}"
+                              alt="Strike probability · ${sys.name || sys.id || ""}"
+                              class="tc-image"
+                              loading="lazy"
+                            />
+                          </a>
+                        `
+                        : `<p class="tc-missing">Image Strike non disponible.</p>`
+                    }
+                  </div>
+
+                  <div class="tc-column">
+                    <h2>Plumes (ECMWF)</h2>
+                    ${
+                      plumesImg
+                        ? `
+                          <a href="${plumesImg}" target="_blank" rel="noopener noreferrer">
+                            <img
+                              src="${plumesImg}"
+                              alt="Plumes · ${sys.name || sys.id || ""}"
+                              class="tc-image"
+                              loading="lazy"
+                            />
+                          </a>
+                        `
+                        : `<p class="tc-missing">Image Plumes non disponible.</p>`
+                    }
+                  </div>
+                </div>
+
+                <div class="tc-links-row">
+                  ${
+                    sys.strikePage
+                      ? `<a class="tc-link" href="${sys.strikePage}" target="_blank" rel="noopener noreferrer">
+                           Page interactive Strike ECMWF
+                         </a>`
+                      : ""
+                  }
+                  ${
+                    sys.plumesPage
+                      ? `<a class="tc-link" href="${sys.plumesPage}" target="_blank" rel="noopener noreferrer">
+                           Page interactive Plumes ECMWF
+                         </a>`
+                      : ""
+                  }
+                </div>
+              </article>
             `;
+          }
 
-            systemsEl.appendChild(card);
-          });
+          renderTabs();
+          renderSystem();
         } catch (err) {
           console.error(err);
-          statusEl.textContent = "Erreur de chargement du catalogue.";
-          systemsEl.innerHTML =
+          statusEl.textContent = "Erreur de chargement des données.";
+          document.getElementById("tabs").innerHTML = "";
+          document.getElementById("system-view").innerHTML =
             '<div class="empty error">Impossible de charger les données pour le moment.</div>';
         }
       }
 
-      loadCatalog();
+      loadEcmwfWpac();
     </script>
   </body>
 </html>
