@@ -1,6 +1,6 @@
 {
   "basin": "WPAC",
-  "lastUpdate": "2025-11-13T14:25:14.268Z",
+  "lastUpdate": "2025-11-13T14:37:05.151Z",
   "systems": [
     {
       "id": "32W",
@@ -9,8 +9,8 @@
       "basin": "WPAC",
       "center": "ECMWF",
       "advisoryTime": "2025-11-13 00Z · offset D-8",
-      "strikeImage": null,
-      "plumesImage": null,
+      "strikeImage": "https://charts.ecmwf.int/opencharts-api/v1/products/cyclone/?format=png&product=tc_strike_aifs_ens&base_time=202511130000&offset=D-8&unique_id=32W_FUNGWONG_2025",
+      "plumesImage": "https://charts.ecmwf.int/opencharts-api/v1/products/cyclone/?format=png&product=tc_plumes_aifs_ens&base_time=202511130000&offset=D-8&unique_id=32W_FUNGWONG_2025",
       "strikePage": "https://charts.ecmwf.int/products/cyclone?base_time=202511130000&offset=D-8&product=tc_strike_aifs_ens&unique_id=32W_FUNGWONG_2025",
       "plumesPage": "https://charts.ecmwf.int/products/cyclone?base_time=202511130000&offset=D-8&product=tc_plumes_aifs_ens&unique_id=32W_FUNGWONG_2025"
     }
