@@ -19,9 +19,7 @@ jobs:
           node-version: 20
 
       - name: Run update script
-        run: |
-          npm install
-          npm run update:wnp
+        run: node scripts/update-wnp.js
 
       - name: Commit updated data
         run: |
@@ -30,9 +28,3 @@ jobs:
           git add data/wnp-catalog.json
           git commit -m "Auto-update: WNP catalog" || echo "No changes"
           git push
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
