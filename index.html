@@ -13,7 +13,8 @@
       <div class="coi-header-inner">
         <h1>Cycloneoi Hub – Pacifique Ouest</h1>
         <p class="subtitle">
-          Diagrams ECMWF · Strike probability & Plumes · Mise à jour auto toutes les 6&nbsp;h
+          Diagrams ECMWF · Strike probability &amp; Plumes · Mise à jour auto
+          toutes les 6&nbsp;h
         </p>
       </div>
     </header>
@@ -21,18 +22,8 @@
     <!-- ===== MAIN ===== -->
     <main class="coi-main">
       <section class="coi-panel">
-
-        <!-- État mise à jour -->
         <div id="status" class="status">Chargement des données…</div>
-
-        <!-- Onglets systèmes -->
-        <div id="system-tabs" class="system-tabs"></div>
-
-        <!-- Zone affichage système -->
-        <div id="system-content" class="system-content">
-          <p class="loading">Chargement…</p>
-        </div>
-
+        <div id="systems" class="systems-grid"></div>
       </section>
     </main>
 
@@ -43,91 +34,126 @@
       </p>
     </footer>
 
-    <!-- ===== SCRIPT ONGLET ===== -->
+    <!-- ===== SCRIPT PRINCIPAL ===== -->
     <script>
+      // Convertit une URL "produit" ECMWF (page HTML)
+      // en URL PNG via l'API opencharts
+      function toPngUrl(pageUrl) {
+        if (!pageUrl) return null;
+        try {
+          const u = new URL(pageUrl);
+
+          const base_time = u.searchParams.get("base_time");
+          const offset = u.searchParams.get("offset");
+          const product = u.searchParams.get("product");
+          const unique_id = u.searchParams.get("unique_id");
+
+          if (!base_time || !product) return null;
+
+          const api = new URL(
+            "https://charts.ecmwf.int/opencharts-api/v1/products/cyclone/"
+          );
+          api.searchParams.set("format", "png");
+          api.searchParams.set("base_time", base_time);
+          api.searchParams.set("product", product);
+          if (offset) api.searchParams.set("offset", offset);
+          if (unique_id) api.searchParams.set("unique_id", unique_id);
+
+          return api.toString();
+        } catch (e) {
+          console.error("toPngUrl error:", e);
+          return null;
+        }
+      }
+
       async function loadCatalog() {
         const statusEl = document.getElementById("status");
-        const tabsEl = document.getElementById("system-tabs");
-        const contentEl = document.getElementById("system-content");
+        const systemsEl = document.getElementById("systems");
 
         try {
+          // IMPORTANT : on lit maintenant ecmwf-wpac.json
           const res = await fetch("./data/ecmwf-wpac.json?c=" + Date.now());
           if (!res.ok) throw new Error("HTTP " + res.status);
 
           const catalog = await res.json();
           const systems = catalog.systems || [];
 
-          // --- Affichage date mise à jour ---
           statusEl.textContent =
             "Dernière mise à jour : " + (catalog.lastUpdate || "n/a");
 
-          // --- Aucun système actif ---
-          if (systems.length === 0) {
-            tabsEl.innerHTML = "";
-            contentEl.innerHTML =
-              '<div class="no-system">Aucune activité en cours dans le Pacifique Ouest.</div>';
+          if (!systems.length) {
+            systemsEl.innerHTML =
+              '<div class="empty">Aucune activité en cours dans le Pacifique Ouest.</div>';
             return;
           }
 
-          // --- Trier par numéro W ---
-          systems.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+          systemsEl.innerHTML = "";
 
-          // --- Génération onglets ---
-          tabsEl.innerHTML = "";
-          systems.forEach((sys, idx) => {
-            const btn = document.createElement("button");
-            btn.className = "sys-tab" + (idx === 0 ? " active" : "");
-            btn.textContent = `${sys.id} · ${sys.name}`;
-            btn.addEventListener("click", () => {
-              document
-                .querySelectorAll(".sys-tab")
-                .forEach(b => b.classList.remove("active"));
+          systems.forEach((sys) => {
+            const card = document.createElement("article");
+            card.className = "tc-card";
 
-              btn.classList.add("active");
-              displaySystem(sys);
-            });
-            tabsEl.appendChild(btn);
-          });
+            const strikePng = toPngUrl(sys.strikeUrl);
+            const plumesPng = toPngUrl(sys.plumesUrl);
 
-          // --- Afficher le premier système ---
-          displaySystem(systems[0]);
+            card.innerHTML = `
+              <h2 class="tc-name">${sys.id} · ${sys.name}</h2>
+              <p class="tc-meta">
+                Bassin&nbsp;: ${sys.basin || "WPAC"}
+                · Centre&nbsp;: ${sys.center || "ECMWF"}
+                · Année&nbsp;: ${sys.year || "—"}
+                ${
+                  sys.advisoryTime
+                    ? " · Run&nbsp;: " + sys.advisoryTime
+                    : ""
+                }
+              </p>
 
-          // --- Fonction affichage détail système ---
-          function displaySystem(sys) {
-            contentEl.innerHTML = `
-              <div class="sys-card">
-                <div class="sys-title">
-                  ${sys.name}
-                  <span class="sys-id">${sys.id}</span>
-                </div>
+              <div class="tc-links">
+                ${
+                  sys.strikeUrl
+                    ? `<a class="tc-link" href="${sys.strikeUrl}" target="_blank" rel="noopener noreferrer">
+                         Ouvrir la page Strike ECMWF
+                       </a>`
+                    : ""
+                }
+                ${
+                  sys.plumesUrl
+                    ? `<a class="tc-link" href="${sys.plumesUrl}" target="_blank" rel="noopener noreferrer">
+                         Ouvrir la page Plumes ECMWF
+                       </a>`
+                    : ""
+                }
+              </div>
 
-                <div class="sys-meta">
-                  <span>Bassin : ${sys.basin}</span>
-                  <span>Centre : ${sys.center}</span>
-                  <span>Année : ${sys.year}</span>
-                  <span>Run : ${sys.advisoryTime}</span>
-                </div>
+              <div class="tc-images">
+                ${
+                  strikePng
+                    ? `<div class="tc-image-block">
+                         <h3>Strike probability (ECMWF)</h3>
+                         <img src="${strikePng}" alt="Strike probability">
+                       </div>`
+                    : ""
+                }
 
-                <div class="sys-images">
-                  ${
-                    sys.strikeUrl
-                      ? `<img src="${sys.strikeUrl}" alt="Strike probability">`
-                      : ""
-                  }
-                  ${
-                    sys.plumesUrl
-                      ? `<img src="${sys.plumesUrl}" alt="Plumes ECMWF">`
-                      : ""
-                  }
-                </div>
+                ${
+                  plumesPng
+                    ? `<div class="tc-image-block">
+                         <h3>Plumes (ECMWF)</h3>
+                         <img src="${plumesPng}" alt="Plumes ECMWF">
+                       </div>`
+                    : ""
+                }
               </div>
             `;
-          }
+
+            systemsEl.appendChild(card);
+          });
         } catch (err) {
           console.error(err);
           statusEl.textContent = "Erreur de chargement du catalogue.";
-          contentEl.innerHTML =
-            '<div class="no-system error">Impossible de charger les données pour le moment.</div>';
+          systemsEl.innerHTML =
+            '<div class="empty error">Impossible de charger les données pour le moment.</div>';
         }
       }
 
