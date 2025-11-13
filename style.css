@@ -1,0 +1,185 @@
+:root {
+  --bg: #050914;
+  --bg-panel: #0b1222;
+  --accent: #00c2ff;
+  --accent-soft: rgba(0, 194, 255, 0.15);
+  --text: #f5f7ff;
+  --text-muted: #9aa4c6;
+  --border: #1b2340;
+  --danger: #ff6b81;
+  --radius-lg: 18px;
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.5);
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background: radial-gradient(circle at top, #0e1630 0, #02040a 55%, #000 100%);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+
+.coi-header {
+  padding: 1.6rem 1.4rem 0.8rem;
+}
+
+.coi-header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.coi-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 0.02em;
+}
+
+.coi-header .subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* Main panel */
+
+.coi-main {
+  flex: 1;
+  padding: 0.4rem 1.4rem 1.4rem;
+  display: flex;
+  justify-content: center;
+}
+
+.coi-panel {
+  max-width: 1180px;
+  width: 100%;
+  background: linear-gradient(
+      135deg,
+      rgba(0, 194, 255, 0.08),
+      rgba(0, 0, 0, 0)
+    ),
+    var(--bg-panel);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  padding: 1.1rem 1.3rem 1.3rem;
+}
+
+/* Status */
+
+.status {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0.9rem;
+}
+
+/* Grid systèmes */
+
+.systems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.tc-card {
+  background: radial-gradient(circle at top left, var(--accent-soft), #050716);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tc-name {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.tc-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tc-images {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.tc-images figure {
+  margin: 0;
+  background: #02040a;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.tc-images img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tc-images figcaption {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* États vides / erreur */
+
+.empty {
+  padding: 1.4rem 1rem;
+  border-radius: 14px;
+  background: rgba(13, 21, 44, 0.9);
+  border: 1px dashed var(--border);
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.empty.error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Footer */
+
+.coi-footer {
+  padding: 0.6rem 1.4rem 1.1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.coi-footer p {
+  margin: 0;
+  text-align: center;
+}
+
+/* Responsive */
+
+@media (min-width: 720px) {
+  .tc-images {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
