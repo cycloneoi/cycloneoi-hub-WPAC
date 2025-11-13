@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cycloneoi Hub – Pacifique Ouest (ECMWF)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="coi-header">
+      <div class="coi-header-inner">
+        <h1>Cycloneoi Hub – Pacifique Ouest</h1>
+        <p class="subtitle">
+          Diagrams ECMWF · Strike probability &amp; Plumes · Mise à jour auto toutes les 6&nbsp;h
+        </p>
+      </div>
+    </header>
+
+    <main class="coi-main">
+      <section class="coi-panel">
+        <div id="status" class="status">Chargement des données…</div>
+        <div id="systems" class="systems-grid"></div>
+      </section>
+    </main>
+
+    <footer class="coi-footer">
+      <p>
+        Données de prévision : ECMWF · Intégration automatique par Cycloneoi.
+      </p>
+    </footer>
+
+    <script>
+      async function loadCatalog() {
+        const statusEl = document.getElementById("status");
+        const systemsEl = document.getElementById("systems");
+
+        try {
+          const res = await fetch("./data/wnp-catalog.json?c=" + Date.now());
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const catalog = await res.json();
+
+          statusEl.textContent =
+            "Dernière mise à jour : " + (catalog.lastUpdate || "n/a");
+
+          const systems = catalog.systems || [];
+
+          if (!systems.length) {
+            systemsEl.innerHTML =
+              '<div class="empty">Aucune activité en cours dans le Pacifique Ouest.</div>';
+            return;
+          }
+
+          systemsEl.innerHTML = "";
+
+          systems.forEach((sys) => {
+            const card = document.createElement("article");
+            card.className = "tc-card";
+
+            card.innerHTML = `
+              <h2 class="tc-name">${sys.name || sys.id}</h2>
+              <p class="tc-meta">
+                ID&nbsp;: ${sys.id || "–"}
+                · Centre&nbsp;: ${sys.center || "ECMWF"}
+                ${sys.advisoryTime ? " · Run&nbsp;: " + sys.advisoryTime : ""}
+              </p>
+              <div class="tc-images">
+                ${
+                  sys.strikePng
+                    ? `<figure>
+                         <img src="${sys.strikePng}" loading="lazy" alt="Strike probability ${sys.name || sys.id}">
+                         <figcaption>Strike probability</figcaption>
+                       </figure>`
+                    : ""
+                }
+                ${
+                  sys.plumesPng
+                    ? `<figure>
+                         <img src="${sys.plumesPng}" loading="lazy" alt="Plumes ${sys.name || sys.id}">
+                         <figcaption>Plumes</figcaption>
+                       </figure>`
+                    : ""
+                }
+              </div>
+            `;
+
+            systemsEl.appendChild(card);
+          });
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Erreur de chargement du catalogue.";
+          systemsEl.innerHTML =
+            '<div class="empty error">Impossible de charger les données pour le moment.</div>';
+        }
+      }
+
+      loadCatalog();
+    </script>
+  </body>
+</html>
