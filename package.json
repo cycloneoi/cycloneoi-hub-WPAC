@@ -1,0 +1,12 @@
+{
+  "name": "cycloneoi-hub-wpac",
+  "version": "1.0.0",
+  "description": "Mini hub automatique Cycloneoi – ECMWF Tropical Cyclone Diagrams (Pacifique Ouest)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "update:wnp": "node scripts/update-wnp.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
