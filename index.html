@@ -6,95 +6,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./style.css" />
   </head>
+
   <body>
+    <!-- ===== HEADER ===== -->
     <header class="coi-header">
       <div class="coi-header-inner">
         <h1>Cycloneoi Hub – Pacifique Ouest</h1>
         <p class="subtitle">
-          Diagrams ECMWF · Strike probability &amp; Plumes · Mise à jour auto
-          toutes les 6&nbsp;h
+          Diagrams ECMWF · Strike probability & Plumes · Mise à jour auto toutes les 6&nbsp;h
         </p>
       </div>
     </header>
 
+    <!-- ===== MAIN ===== -->
     <main class="coi-main">
       <section class="coi-panel">
+
+        <!-- État mise à jour -->
         <div id="status" class="status">Chargement des données…</div>
-        <div id="systems" class="systems-grid"></div>
+
+        <!-- Onglets systèmes -->
+        <div id="system-tabs" class="system-tabs"></div>
+
+        <!-- Zone affichage système -->
+        <div id="system-content" class="system-content">
+          <p class="loading">Chargement…</p>
+        </div>
+
       </section>
     </main>
 
+    <!-- ===== FOOTER ===== -->
     <footer class="coi-footer">
       <p>
         Données de prévision : ECMWF · Intégration automatique par Cycloneoi.
       </p>
     </footer>
 
+    <!-- ===== SCRIPT ONGLET ===== -->
     <script>
       async function loadCatalog() {
         const statusEl = document.getElementById("status");
-        const systemsEl = document.getElementById("systems");
+        const tabsEl = document.getElementById("system-tabs");
+        const contentEl = document.getElementById("system-content");
 
         try {
-          const res = await fetch("./data/wnp-catalog.json?c=" + Date.now());
+          const res = await fetch("./data/ecmwf-wpac.json?c=" + Date.now());
           if (!res.ok) throw new Error("HTTP " + res.status);
-          const catalog = await res.json();
 
+          const catalog = await res.json();
+          const systems = catalog.systems || [];
+
+          // --- Affichage date mise à jour ---
           statusEl.textContent =
             "Dernière mise à jour : " + (catalog.lastUpdate || "n/a");
 
-          const systems = catalog.systems || [];
-
-          if (!systems.length) {
-            systemsEl.innerHTML =
-              '<div class="empty">Aucune activité en cours dans le Pacifique Ouest.</div>';
+          // --- Aucun système actif ---
+          if (systems.length === 0) {
+            tabsEl.innerHTML = "";
+            contentEl.innerHTML =
+              '<div class="no-system">Aucune activité en cours dans le Pacifique Ouest.</div>';
             return;
           }
 
-          systemsEl.innerHTML = "";
+          // --- Trier par numéro W ---
+          systems.sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
-          systems.forEach((sys) => {
-            const card = document.createElement("article");
-            card.className = "tc-card";
+          // --- Génération onglets ---
+          tabsEl.innerHTML = "";
+          systems.forEach((sys, idx) => {
+            const btn = document.createElement("button");
+            btn.className = "sys-tab" + (idx === 0 ? " active" : "");
+            btn.textContent = `${sys.id} · ${sys.name}`;
+            btn.addEventListener("click", () => {
+              document
+                .querySelectorAll(".sys-tab")
+                .forEach(b => b.classList.remove("active"));
 
-            card.innerHTML = `
-              <h2 class="tc-name">${sys.name || sys.id}</h2>
-              <p class="tc-meta">
-                ID&nbsp;: ${sys.id || "–"}
-                · Bassin&nbsp;: ${sys.basin || "WPAC"}
-                · Centre&nbsp;: ${sys.center || "ECMWF"}
-                ${sys.year ? " · " + sys.year : ""}
-                ${
-                  sys.advisoryTime
-                    ? "<br>Run&nbsp;: " + sys.advisoryTime
-                    : ""
-                }
-              </p>
-              <div class="tc-links">
-                ${
-                  sys.strikeUrl
-                    ? `<a class="tc-link" href="${sys.strikeUrl}" target="_blank" rel="noopener noreferrer">
-                         Strike probability (ECMWF)
-                       </a>`
-                    : ""
-                }
-                ${
-                  sys.plumesUrl
-                    ? `<a class="tc-link" href="${sys.plumesUrl}" target="_blank" rel="noopener noreferrer">
-                         Plumes (ECMWF)
-                       </a>`
-                    : ""
-                }
+              btn.classList.add("active");
+              displaySystem(sys);
+            });
+            tabsEl.appendChild(btn);
+          });
+
+          // --- Afficher le premier système ---
+          displaySystem(systems[0]);
+
+          // --- Fonction affichage détail système ---
+          function displaySystem(sys) {
+            contentEl.innerHTML = `
+              <div class="sys-card">
+                <div class="sys-title">
+                  ${sys.name}
+                  <span class="sys-id">${sys.id}</span>
+                </div>
+
+                <div class="sys-meta">
+                  <span>Bassin : ${sys.basin}</span>
+                  <span>Centre : ${sys.center}</span>
+                  <span>Année : ${sys.year}</span>
+                  <span>Run : ${sys.advisoryTime}</span>
+                </div>
+
+                <div class="sys-images">
+                  ${
+                    sys.strikeUrl
+                      ? `<img src="${sys.strikeUrl}" alt="Strike probability">`
+                      : ""
+                  }
+                  ${
+                    sys.plumesUrl
+                      ? `<img src="${sys.plumesUrl}" alt="Plumes ECMWF">`
+                      : ""
+                  }
+                </div>
               </div>
             `;
-
-            systemsEl.appendChild(card);
-          });
+          }
         } catch (err) {
           console.error(err);
           statusEl.textContent = "Erreur de chargement du catalogue.";
-          systemsEl.innerHTML =
-            '<div class="empty error">Impossible de charger les données pour le moment.</div>';
+          contentEl.innerHTML =
+            '<div class="no-system error">Impossible de charger les données pour le moment.</div>';
         }
       }
 
