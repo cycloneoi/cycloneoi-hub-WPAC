@@ -207,3 +207,63 @@ body {
 .tc-link:hover {
   background: rgba(0, 194, 255, 0.25);
 }
+
+.tc-card {
+  background: #0d1b2a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #15263a;
+  margin-top: 16px;
+  color: #e6edf3;
+}
+
+.tc-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tc-meta {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.tc-links {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tc-link {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #1f3c5c;
+  text-decoration: none;
+  color: #dceaff;
+}
+
+.tc-link:hover {
+  background: #19324c;
+}
+
+.tc-images {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.tc-image-block h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+.tc-image-block img {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #1b324a;
+  display: block;
+}
